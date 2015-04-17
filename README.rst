@@ -1,7 +1,9 @@
 Color Thief
 ===========
 
-A Python package for grabbing the color palette from an image.
+A Python module for grabbing the color palette from an image.
+
+.. image:: http://img3.douban.com/view/photo/large/public/p2239120853.jpg
 
 Installation
 ------------
