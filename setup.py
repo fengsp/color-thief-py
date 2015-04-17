@@ -26,6 +26,7 @@ setup(
     long_description=__doc__,
     py_modules=['color_thief'],
     install_requires=[
+        'Pillow'
     ],
     zip_safe=False,
     classifiers=[

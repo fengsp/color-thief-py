@@ -12,6 +12,8 @@ __version__ = '0.1-dev'
 
 import math
 
+from PIL import Image
+
 
 class cached_property(object):
     """Decorator that creates converts a method with a single
@@ -27,33 +29,53 @@ class cached_property(object):
 
 class ColorThief(object):
     """Color thief main class."""
-    def __init__(self):
-        pass
+    def __init__(self, file):
+        """Create one color thief for one image.
+
+        :param file: A filename (string) or a file object. The file object
+                     must implement `read()`, `seek()`, and `tell()` methods,
+                     and be opened in binary mode.
+        """
+        self.image = Image.open(file)
 
     def get_color(self, quality=10):
         """Get the dominant color.
 
-        Quality is an optional argument.  0 is the highest quality settings,
-        10 is the default.  The bigger the number, the faster a color will be
-        returned but the greater the likelihood that is will not be the most
-        dominant color.
-
-        :param quality: needs to be an integer
+        :param quality: quality settings, 1 is the highest quality, the bigger
+                        the number, the faster a color will be returned but
+                        the greater the likelihood that it will not be the
+                        visually most dominant color
         :return tuple: (r, g, b)
         """
         palette = self.get_palette(5, quality)
         return palette[0]
 
-    def get_palette(self, count=10, quality=10):
+    def get_palette(self, color_count=10, quality=10):
         """Build a color palette.  We are using the median cut algorithm to
         cluster similar colors.
-        
-        :param count: the size of the palette, max number of colors returned
-        :param quality: quality settings, 0 is the highest quality, the bigger
-                        the number, the faster the palette generation
+
+        :param color_count: the size of the palette, max number of colors
+        :param quality: quality settings, 1 is the highest quality, the bigger
+                        the number, the faster the palette generation, but the
+                        greater the likelihood that colors will be missed.
         :return list: a list of tuple in the form (r, g, b)
         """
-        pass
+        image = self.image.convert('RGBA')
+        width, height = image.size
+        pixels = list(image.getdata())
+        pixel_count = width * height
+        valid_pixels = []
+        for i in range(0, pixel_count, quality):
+            r, g, b, a = pixels[i]
+            # If pixel is mostly opaque and not white
+            if a >= 125:
+                if not (r > 250 and g > 250 and b > 250):
+                    valid_pixels.append((r, g, b))
+
+        # Send array to quantize function which clusters values
+        # using median cut algorithm
+        cmap = MMCQ.quantize(valid_pixels, color_count)
+        return cmap.palette
 
 
 class MMCQ(object):
@@ -75,7 +97,6 @@ class MMCQ(object):
         """histo (1-d array, giving the number of pixels in each quantized
         region of color space)
         """
-        histo_size = 1 << (3 * MMCQ.SIGBITS)
         histo = dict()
         for pixel in pixels:
             rval = pixel[0] >> MMCQ.RSHIFT
@@ -108,15 +129,15 @@ class MMCQ(object):
     @staticmethod
     def median_cut_apply(histo, vbox):
         if not vbox.count:
-            return None
+            return (None, None)
 
-        rw = vbox.r2 - vbox.r1 +1
-        gw = vbox.g2 - vbox.g1 +1
-        bw = vbox.b2 - vbox.b1 +1
+        rw = vbox.r2 - vbox.r1 + 1
+        gw = vbox.g2 - vbox.g1 + 1
+        bw = vbox.b2 - vbox.b1 + 1
         maxw = max([rw, gw, bw])
         # only one pixel, no split
         if vbox.count == 1:
-            return (vbox.copy,)
+            return (vbox.copy, None)
         # Find the partial sum arrays along the selected axis.
         total = 0
         sum_ = 0
@@ -172,16 +193,17 @@ class MMCQ(object):
                 else:
                     d2 = max([dim1_val, int(i - 1 - left / 2)])
                 # avoid 0-count boxes
-                while not partialsum[d2]:
+                while not partialsum.get(d2, False):
                     d2 += 1
-                count2 = lookaheadsum[d2]
+                count2 = lookaheadsum.get(d2)
                 while not count2 and partialsum.get(d2-1, False):
                     d2 -= 1
-                    count2 = lookaheadsum[d2]
+                    count2 = lookaheadsum.get(d2)
                 # set dimensions
                 setattr(vbox1, dim2, d2)
                 setattr(vbox2, dim1, getattr(vbox1, dim2) + 1)
                 return (vbox1, vbox2)
+        return (None, None)
 
     @staticmethod
     def quantize(pixels, max_color):
@@ -196,7 +218,6 @@ class MMCQ(object):
             raise Exception('Wrong number of max colors when quantize.')
 
         histo = MMCQ.get_histo(pixels)
-        histo_size = 1 << (3 * MMCQ.SIGBITS)
 
         # check that we aren't below maxcolors already
         if len(histo) <= max_color:
@@ -204,8 +225,51 @@ class MMCQ(object):
             pass
 
         # get the beginning vbox from the colors
-        vbox = MMCQ.vbox_from_colors(pixels, histo)
-        pq = PQueue()
+        vbox = MMCQ.vbox_from_pixels(pixels, histo)
+        pq = PQueue(lambda x: x.count)
+        pq.push(vbox)
+
+        # inner function to do the iteration
+        def iter_(lh, target):
+            n_color = 1
+            n_iter = 0
+            while n_iter < MMCQ.MAX_ITERATION:
+                vbox = lh.pop()
+                if not vbox.count:  # just put it back
+                    lh.push(vbox)
+                    n_iter += 1
+                    continue
+                # do the cut
+                vbox1, vbox2 = MMCQ.median_cut_apply(histo, vbox)
+                if not vbox1:
+                    raise Exception("vbox1 not defined; shouldn't happen!")
+                lh.push(vbox1)
+                if vbox2:  # vbox2 can be null
+                    lh.push(vbox2)
+                    n_color += 1
+                if n_color >= target:
+                    return
+                if n_iter > MMCQ.MAX_ITERATION:
+                    return
+                n_iter += 1
+
+        # first set of colors, sorted by population
+        iter_(pq, MMCQ.FRACT_BY_POPULATIONS * max_color)
+
+        # Re-sort by the product of pixel occupancy times the size in
+        # color space.
+        pq2 = PQueue(lambda x: x.count * x.volume)
+        while pq.size():
+            pq2.push(pq.pop())
+
+        # next set - generate the median cuts using the (npix * vol) sorting.
+        iter_(pq2, max_color - pq2.size())
+
+        # calculate the actual colors
+        cmap = CMap()
+        while pq2.size():
+            cmap.push(pq2.pop())
+        return cmap
 
 
 class VBox(object):
@@ -336,7 +400,7 @@ class PQueue(object):
         self._sorted = True
 
     def push(self, o):
-        self.contents.push(o)
+        self.contents.append(o)
         self._sorted = False
 
     def peek(self, index=None):
@@ -355,6 +419,4 @@ class PQueue(object):
         return len(self.contents)
 
     def map(self, f):
-        if not self._sorted:
-            self.sort()
         return map(f, self.contents)
