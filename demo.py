@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-from urllib.request import urlopen
+
+import sys
+
+if sys.version_info < (3, 0):
+    from urllib2 import urlopen
+else:
+    from urllib.request import urlopen
+
 import io
 
 from colorthief import ColorThief
