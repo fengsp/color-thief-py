@@ -174,7 +174,7 @@ class MMCQ(object):
                         sum_ += histo.get(index, 0)
                 total += sum_
                 partialsum[i] = total
-        for i, d in partialsum.iteritems():
+        for i, d in partialsum.items():
             lookaheadsum[i] = total - d
 
         # determine the cut planes
@@ -419,4 +419,4 @@ class PQueue(object):
         return len(self.contents)
 
     def map(self, f):
-        return map(f, self.contents)
+        return list(map(f, self.contents))
