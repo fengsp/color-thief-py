@@ -8,7 +8,7 @@
     :copyright: (c) 2015 by Shipeng Feng.
     :license: BSD, see LICENSE for more details.
 """
-__version__ = '0.2-dev'
+__version__ = '0.2'
 
 import math
 
