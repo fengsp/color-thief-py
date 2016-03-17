@@ -74,4 +74,4 @@ Thanks to Lokesh Dhakar for his `original work
 Better
 ------
 
-If you feel anything wrong, feedbacks or pull requests are welcomed.
+If you feel anything wrong, feedbacks or pull requests are welcome.
