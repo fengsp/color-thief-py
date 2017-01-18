@@ -62,7 +62,7 @@ class ColorThief(object):
         """
         image = self.image.convert('RGBA')
         width, height = image.size
-        pixels = list(image.getdata())
+        pixels = image.getdata()
         pixel_count = width * height
         valid_pixels = []
         for i in range(0, pixel_count, quality):
