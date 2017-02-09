@@ -14,3 +14,10 @@ Version 0.2
 Released on Oct 14th 2015
 
 - Added Python3.x support
+
+Version 0.2.1
+-------------
+
+Released on Feb 9th 2017
+
+- Removed useless list creation
