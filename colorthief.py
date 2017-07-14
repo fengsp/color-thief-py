@@ -50,7 +50,7 @@ class ColorThief(object):
         palette = self.get_palette(5, quality)
         return palette[0]
 
-    def get_palette(self, color_count=10, quality=10):
+    def get_palette(self, color_count=10, quality=10, count=False):
         """Build a color palette.  We are using the median cut algorithm to
         cluster similar colors.
 
@@ -74,7 +74,7 @@ class ColorThief(object):
 
         # Send array to quantize function which clusters values
         # using median cut algorithm
-        cmap = MMCQ.quantize(valid_pixels, color_count)
+        cmap = MMCQ.quantize(valid_pixels, color_count, count)
         return cmap.palette
 
 
@@ -206,7 +206,7 @@ class MMCQ(object):
         return (None, None)
 
     @staticmethod
-    def quantize(pixels, max_color):
+    def quantize(pixels, max_color, count):
         """Quantize.
 
         :param pixels: a list of pixel in the form (r, g, b)
@@ -266,7 +266,7 @@ class MMCQ(object):
         iter_(pq2, max_color - pq2.size())
 
         # calculate the actual colors
-        cmap = CMap()
+        cmap = CMap(count=count)
         while pq2.size():
             cmap.push(pq2.pop())
         return cmap
@@ -349,11 +349,14 @@ class VBox(object):
 
 class CMap(object):
     """Color map"""
-    def __init__(self):
+    def __init__(self, count):
         self.vboxes = PQueue(lambda x: x['vbox'].count * x['vbox'].volume)
+        self.count = count
 
     @property
     def palette(self):
+        if self.count:
+            return self.vboxes.map(lambda x: x['color'] + (x['vbox'].count,))
         return self.vboxes.map(lambda x: x['color'])
 
     def push(self, vbox):
