@@ -8,7 +8,7 @@
     :copyright: (c) 2015 by Shipeng Feng.
     :license: BSD, see LICENSE for more details.
 """
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 
 import math
 
@@ -38,7 +38,7 @@ class ColorThief(object):
         """
         self.image = Image.open(file)
 
-    def get_color(self, quality=10):
+    def get_color(self, quality=10, ignore_white=True):
         """Get the dominant color.
 
         :param quality: quality settings, 1 is the highest quality, the bigger
@@ -47,10 +47,10 @@ class ColorThief(object):
                         visually most dominant color
         :return tuple: (r, g, b)
         """
-        palette = self.get_palette(5, quality)
+        palette = self.get_palette(5, quality, ignore_white)
         return palette[0]
 
-    def get_palette(self, color_count=10, quality=10):
+    def get_palette(self, color_count=10, quality=10, ignore_white=True):
         """Build a color palette.  We are using the median cut algorithm to
         cluster similar colors.
 
@@ -69,7 +69,7 @@ class ColorThief(object):
             r, g, b, a = pixels[i]
             # If pixel is mostly opaque and not white
             if a >= 125:
-                if not (r > 250 and g > 250 and b > 250):
+                if not (r > 250 and g > 250 and b > 250 and ignore_white):
                     valid_pixels.append((r, g, b))
 
         # Send array to quantize function which clusters values
