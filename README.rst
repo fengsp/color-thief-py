@@ -3,10 +3,6 @@ Color Thief
 
 A Python module for grabbing the color palette from an image.
 
-.. image:: http://img3.douban.com/view/photo/large/public/p2239120853.jpg
-   :width: 400 px
-   :align: center
-
 Installation
 ------------
 
