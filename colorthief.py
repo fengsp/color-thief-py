@@ -69,7 +69,7 @@ class ColorThief(object):
             r, g, b, a = pixels[i]
             # If pixel is mostly opaque and not white
             if a >= 125:
-                if not (r > 250 and g > 250 and b > 250):
+                if not (r > 255 and g > 255 and b > 255):
                     valid_pixels.append((r, g, b))
 
         # Send array to quantize function which clusters values
