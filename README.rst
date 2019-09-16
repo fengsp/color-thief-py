@@ -29,10 +29,10 @@ API
 .. code:: python
 
     class ColorThief(object):
-        def __init__(self, file):
+        def __init__(self, obj, is_obj=False):
             """Create one color thief for one image.
 
-            :param file: A filename (string) or a file object. The file object
+            :param obj: A filename (string) or a file object. The file object
                          must implement `read()`, `seek()`, and `tell()` methods,
                          and be opened in binary mode.
             :param is_obj: A boolean. If True, the object will be passed along. Useful
