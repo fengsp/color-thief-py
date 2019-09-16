@@ -29,14 +29,18 @@ class cached_property(object):
 
 class ColorThief(object):
     """Color thief main class."""
-    def __init__(self, file):
+    def __init__(self, obj, is_obj=False):
         """Create one color thief for one image.
-
-        :param file: A filename (string) or a file object. The file object
+        :param obj: A filename (string) or a file object. The file object
                      must implement `read()`, `seek()`, and `tell()` methods,
                      and be opened in binary mode.
+        :param is_obj: A boolean. If True, the object will be passed along. Useful
+                        for passing PIL objects to ColorThief.
         """
-        self.image = Image.open(file)
+        if is_obj is True:
+            self.image = obj
+        else:
+            self.image = Image.open(obj)
 
     def get_color(self, quality=10):
         """Get the dominant color.
