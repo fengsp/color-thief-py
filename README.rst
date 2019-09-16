@@ -35,6 +35,8 @@ API
             :param file: A filename (string) or a file object. The file object
                          must implement `read()`, `seek()`, and `tell()` methods,
                          and be opened in binary mode.
+            :param is_obj: A boolean. If True, the object will be passed along. Useful
+                        for passing PIL objects to ColorThief.
             """
             pass
 
