@@ -29,12 +29,14 @@ API
 .. code:: python
 
     class ColorThief(object):
-        def __init__(self, file):
+        def __init__(self, obj, is_obj=False):
             """Create one color thief for one image.
 
-            :param file: A filename (string) or a file object. The file object
+            :param obj: A filename (string) or a file object. The file object
                          must implement `read()`, `seek()`, and `tell()` methods,
                          and be opened in binary mode.
+            :param is_obj: A boolean. If True, the object will be passed along. Useful
+                         for passing PIL objects to ColorThief.
             """
             pass
 
@@ -45,6 +47,8 @@ API
                             the number, the faster a color will be returned but
                             the greater the likelihood that it will not be the
                             visually most dominant color
+            :param ignore_white: boolean, ignore white pixels if true
+            :param ignore_black: boolean, ignore black pixels if true
             :return tuple: (r, g, b)
             """
             pass
@@ -57,6 +61,8 @@ API
             :param quality: quality settings, 1 is the highest quality, the bigger
                             the number, the faster the palette generation, but the
                             greater the likelihood that colors will be missed.
+            :param ignore_white: boolean, ignore white pixels if true
+            :param ignore_black: boolean, ignore black pixels if true
             :return list: a list of tuple in the form (r, g, b)
             """
             pass

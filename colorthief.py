@@ -29,28 +29,34 @@ class cached_property(object):
 
 class ColorThief(object):
     """Color thief main class."""
-    def __init__(self, file):
+    def __init__(self, obj, is_obj=False):
         """Create one color thief for one image.
-
-        :param file: A filename (string) or a file object. The file object
+        :param obj: A filename (string) or a file object. The file object
                      must implement `read()`, `seek()`, and `tell()` methods,
                      and be opened in binary mode.
+        :param is_obj: A boolean. If True, the object will be passed along. Useful
+                        for passing PIL objects to ColorThief.
         """
-        self.image = Image.open(file)
+        if is_obj is True:
+            self.image = obj
+        else:
+            self.image = Image.open(obj)
 
-    def get_color(self, quality=10):
+    def get_color(self, ignore_white=False, ignore_black=False, quality=100000):
         """Get the dominant color.
 
         :param quality: quality settings, 1 is the highest quality, the bigger
                         the number, the faster a color will be returned but
                         the greater the likelihood that it will not be the
                         visually most dominant color
+        :param ignore_white: boolean, ignore white pixels if true
+        :param ignore_black: boolean, ignore black pixels if true
         :return tuple: (r, g, b)
         """
-        palette = self.get_palette(5, quality)
+        palette = self.get_palette(ignore_white, ignore_black, 5, quality)
         return palette[0]
 
-    def get_palette(self, color_count=10, quality=10):
+    def get_palette(self, ignore_white, ignore_black, color_count=10, quality=10):
         """Build a color palette.  We are using the median cut algorithm to
         cluster similar colors.
 
@@ -58,6 +64,8 @@ class ColorThief(object):
         :param quality: quality settings, 1 is the highest quality, the bigger
                         the number, the faster the palette generation, but the
                         greater the likelihood that colors will be missed.
+        :param ignore_white: boolean, ignore white pixels if true
+        :param ignore_black: boolean, ignore black pixels if true
         :return list: a list of tuple in the form (r, g, b)
         """
         image = self.image.convert('RGBA')
@@ -67,10 +75,21 @@ class ColorThief(object):
         valid_pixels = []
         for i in range(0, pixel_count, quality):
             r, g, b, a = pixels[i]
-            # If pixel is mostly opaque and not white
+            # If pixel is mostly opaque
             if a >= 125:
-                if not (r > 250 and g > 250 and b > 250):
+                if ignore_white or ignore_black is True:
+                    if ignore_white and ignore_black is True:
+                        if (r and g and b < 250) and (r and g and b > 5):
+                            valid_pixels.append((r, g, b))
+                        elif ignore_white is True and ignore_black is False:
+                            if (r and g and b < 250):
+                                valid_pixels.append((r, g, b))
+                        elif ignore_white is False and ignore_black is True:
+                            if (r and g and b > 5):
+                                valid_pixels.append((r, g, b))
+                else:
                     valid_pixels.append((r, g, b))
+
 
         # Send array to quantize function which clusters values
         # using median cut algorithm
