@@ -1,3 +1,4 @@
+[![Run on Repl.it](https://repl.it/badge/github/fengsp/color-thief-py)](https://repl.it/github/fengsp/color-thief-py)
 Color Thief
 ===========
 
