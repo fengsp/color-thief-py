@@ -35,6 +35,7 @@ class ColorThief(object):
         :param file: A filename (string) or a file object. The file object
                      must implement `read()`, `seek()`, and `tell()` methods,
                      and be opened in binary mode.
+                     Can also be a cv2/np object
         """
         if isinstance(file, str):
             self.image = Image.open(file)
