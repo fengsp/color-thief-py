@@ -50,7 +50,7 @@ class ColorThief(object):
         palette = self.get_palette(5, quality)
         return palette[0]
 
-    def get_palette(self, color_count=10, quality=10):
+    def get_palette(self, color_count=10, quality=10, ignore_white=True):
         """Build a color palette.  We are using the median cut algorithm to
         cluster similar colors.
 
@@ -58,6 +58,7 @@ class ColorThief(object):
         :param quality: quality settings, 1 is the highest quality, the bigger
                         the number, the faster the palette generation, but the
                         greater the likelihood that colors will be missed.
+        :param ignore_white: if white or nearly white pixels should be ignored.
         :return list: a list of tuple in the form (r, g, b)
         """
         image = self.image.convert('RGBA')
@@ -69,7 +70,7 @@ class ColorThief(object):
             r, g, b, a = pixels[i]
             # If pixel is mostly opaque and not white
             if a >= 125:
-                if not (r > 250 and g > 250 and b > 250):
+                if not ignore_white or not (r > 250 and g > 250 and b > 250):
                     valid_pixels.append((r, g, b))
 
         # Send array to quantize function which clusters values
