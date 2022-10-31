@@ -29,14 +29,18 @@ class cached_property(object):
 
 class ColorThief(object):
     """Color thief main class."""
-    def __init__(self, file):
+    def __init__(self, source):
         """Create one color thief for one image.
 
-        :param file: A filename (string) or a file object. The file object
-                     must implement `read()`, `seek()`, and `tell()` methods,
-                     and be opened in binary mode.
+        :param source: Either (1) A filename (string) or a file object. The file
+                       object must implement `read()`, `seek()`, and `tell()`
+                       methods, and be opened in binary mode; or (2) An existing
+                       Image.Image object
         """
-        self.image = Image.open(file)
+        if isinstance(source, Image.Image):
+            self.image = source
+        else:
+            self.image = Image.open(source)
 
     def get_color(self, quality=10):
         """Get the dominant color.
